@@ -5,7 +5,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fixed Luxury 3D Flip Clock (p5.js)</title>
+    <title>Premium 3D Flip Clock (p5.js Font-Fixed)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -35,61 +35,58 @@
     <div id="canvas-container"></div>
 
     <script>
-        // Global variables for the clock state
         let cards = [];
         let prevH = "", prevM = "";
+        let customFont;
 
-        // Standard p5.js setup function
+        // 폰트 증발 현상을 막기 위해 캔버스가 켜지기 전 폰트 파일을 서버에서 선제 다운로드
+        function preload() {
+            // WEBGL 3D 렌더링 엔진과 호환성이 가장 좋은 구글 폰트(Roboto-Bold) 배치
+            customFont = loadFont('https://themes.googleusercontent.com/static/fonts/roboto/v10/Bd7va8V_9fA6m8unbJeguA.ttf');
+        }
+
         function setup() {
             let canvas = createCanvas(windowWidth, windowHeight, WEBGL);
             canvas.parent('canvas-container');
             
-            // Set up default text properties
-            textFont('Helvetica Neue, Helvetica, Arial, sans-serif');
-            textStyle(BOLD);
+            // 외부 로드 폰트 세팅 지정
+            textFont(customFont);
             textAlign(CENTER, CENTER);
 
-            // Initialize 4 flip cards (HH:MM)
             for (let i = 0; i < 4; i++) {
                 cards.push(new FlipCard());
             }
-            
-            // Set initial time immediately
             updateTime(true);
         }
 
-        // Standard p5.js draw function
         function draw() {
-            background(13, 15, 20); // Deep, dark background
+            background(13, 15, 20);
             
-            // Lighting for subtle 3D depth and volume
-            ambientLight(100);
-            directionalLight(200, 200, 200, 0, 0, -1);
+            // 3D 입체 라이팅 최적화
+            ambientLight(110);
+            directionalLight(220, 220, 220, 0, 0, -1);
 
-            // Check for time update
             updateTime(false);
 
-            // Determine dynamic card scaling based on screen size
-            let cardW = min(width * 0.16, 150); // Set a base card width
-            let cardH = cardW * 1.4; // Flip cards are usually tall
-            let gap = cardW * 0.15; // Gap between digits
-            let totalW = (cardW * 4) + (gap * 3) + (cardW * 0.5); // Total clock width including separator gap
+            let cardW = min(width * 0.16, 150); 
+            let cardH = cardW * 1.4; 
+            let gap = cardW * 0.15; 
+            let totalW = (cardW * 4) + (gap * 3) + (cardW * 0.5); 
 
-            // Push transformation to draw from the center
             push();
             translate(-totalW / 2 + cardW / 2, 0);
 
-            // 1. Hours area (Card 1, Card 2)
+            // 1. 시 (Card 1, Card 2)
             cards[0].display(cardW, cardH);
             translate(cardW + gap, 0);
             cards[1].display(cardW, cardH);
             
-            // 2. Center separator (:) 
-            translate(cardW/2 + gap, -cardH * 0.05); // Adjust Y to align dots better
-            drawSeparator(cardW * 0.15); // Separator size relative to card
+            // 2. 구분 기호 (:)
+            translate(cardW/2 + gap, -cardH * 0.03); 
+            drawSeparator(cardW * 0.15); 
             
-            // 3. Minutes area (Card 3, Card 4)
-            translate(cardW/2 + gap, cardH * 0.05); // Restore Y position
+            // 3. 분 (Card 3, Card 4)
+            translate(cardW/2 + gap, cardH * 0.03); 
             cards[2].display(cardW, cardH);
             translate(cardW + gap, 0);
             cards[3].display(cardW, cardH);
@@ -97,12 +94,10 @@
             pop();
         }
 
-        // Functions to manage time
         function updateTime(isFirst) {
             let h = nf(hour(), 2);
             let m = nf(minute(), 2);
 
-            // Set initial state without animation
             if (isFirst) {
                 prevH = h; prevM = m;
                 cards[0].init(h[0]); cards[1].init(h[1]);
@@ -110,13 +105,11 @@
                 return;
             }
 
-            // Check and update hours
             if (h !== prevH) {
                 if (h[0] !== prevH[0]) cards[0].flipTo(h[0]);
                 if (h[1] !== prevH[1]) cards[1].flipTo(h[1]);
                 prevH = h;
             }
-            // Check and update minutes
             if (m !== prevM) {
                 if (m[0] !== prevM[0]) cards[2].flipTo(m[0]);
                 if (m[1] !== prevM[1]) cards[3].flipTo(m[1]);
@@ -124,151 +117,133 @@
             }
         }
 
-        // Draw the static colon separator (:)
         function drawSeparator(size) {
             push();
             noStroke();
-            fill(224, 230, 237, 180); // Subtle, slightly transparent dots
-            ellipse(0, -size * 1.5, size, size); // Top dot
-            ellipse(0, size * 1.5, size, size); // Bottom dot
+            fill(224, 230, 237, 180);
+            ellipse(0, -size * 1.5, size, size); 
+            ellipse(0, size * 1.5, size, size); 
             pop();
         }
 
-        // Re-calculate layout and resize canvas on window resize
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
         }
 
-        // Object-Oriented Class for individual flip cards
         class FlipCard {
             constructor() {
                 this.currentVal = "0";
                 this.nextVal = "0";
                 this.isFlipped = false;
-                this.angle = 0; // Flip animation angle
-                this.bounce = 0; // Analogue settling animation physics variable
+                this.angle = 0; 
+                this.bounce = 0; 
             }
 
-            // Initialize card without animation
             init(val) {
                 this.currentVal = val;
                 this.nextVal = val;
             }
 
-            // Trigger a flip animation to a new value
             flipTo(newVal) {
-                if (this.currentVal === newVal) return; // Prevent double-triggering
+                if (this.currentVal === newVal) return; 
                 this.nextVal = newVal;
                 this.isFlipped = true;
                 this.angle = 0;
                 this.bounce = 0;
             }
 
-            // Draw the card
             display(w, h) {
-                // Update flip animation angle
                 if (this.isFlipped) {
-                    this.angle += 5.5; // Controls the initial falling speed
+                    this.angle += 5.5; 
                     if (this.angle >= 180) {
-                        // Flip is complete
                         this.currentVal = this.nextVal;
                         this.isFlipped = false;
                         this.angle = 0;
-                        this.bounce = 15; // Initiate settling bounce amplitude
+                        this.bounce = 15; 
                     }
                 }
 
-                // Update settling bounce physics
                 if (this.bounce > 0) {
-                    this.bounce *= -0.8; // Set reflection coefficient (negative to alternate side)
-                    if (abs(this.bounce) < 0.5) this.bounce = 0; // Damping complete
+                    this.bounce *= -0.8; 
+                    if (abs(this.bounce) < 0.5) this.bounce = 0; 
                 }
 
-                // طلب 황금 비율 (Golden Ratio) 반영: 글자 크기를 더 여유 있게 조정
-                // This ensures a pleasing amount of padding around the digit.
-                let fontSize = w * 0.8; 
+                // 폰트 여백 조건 반영 (카드의 78% 비율 크기 고정)
+                let fontSize = w * 0.78; 
                 textSize(fontSize);
-
                 noStroke();
 
-                // Static Layer 1: Bottom static panel background (showing the NEXT digit waiting)
+                // 레이어 1: 하단 배경 (미래의 숫자)
                 push();
-                fill(30, 34, 45); // Dark panel color
+                fill(30, 34, 45); 
                 rectMode(CENTER);
-                translate(0, h/4); // Position center of the bottom half
-                rect(0, 0, w, h/2, 0, 0, 12, 12); // Rounded corners at bottom
-                // Align text correctly within the bottom half
+                translate(0, h/4); 
+                rect(0, 0, w, h/2, 0, 0, 12, 12); 
                 fill(255);
-                translate(0, -h/4); // Text should be at the center of the WHOLE card
-                text(this.nextVal, 0, 0);
+                translate(0, -h/4); 
+                // WEBGL 텍스트 높낮이 미세 튜닝 보정 수치 설정
+                text(this.nextVal, 0, -h * 0.05);
                 pop();
 
-                // Static Layer 2: Top static panel background (showing CURRENT digit)
+                // 레이어 2: 상단 배경 (현재 숫자)
                 push();
-                fill(36, 41, 54); // Slightly lighter panel color for top
+                fill(36, 41, 54); 
                 rectMode(CENTER);
-                translate(0, -h/4); // Position center of the top half
-                rect(0, 0, w, h/2, 12, 12, 0, 0); // Rounded corners at top
-                // Align text correctly within the top half
+                translate(0, -h/4); 
+                rect(0, 0, w, h/2, 12, 12, 0, 0); 
                 fill(255);
-                translate(0, h/4); // Text should be at the center of the WHOLE card
-                text(this.currentVal, 0, 0);
+                translate(0, h/4); 
+                text(this.currentVal, 0, -h * 0.05);
                 pop();
 
-                // Dynamic Layer 3: The actual flipping panel
+                // 레이어 3: 회전하는 3D 플립 플레이트
                 if (this.isFlipped) {
                     push();
                     if (this.angle < 90) {
-                        // Section 1: 0 to 90 degrees (Top half folding down forward)
-                        rotateX(-radians(this.angle)); // Rotate around the X-axis (forward)
-                        // Use lerpColor to add shading as it folds
+                        rotateX(-radians(this.angle)); 
                         fill(lerpColor(color(36, 41, 54), color(15, 18, 24), this.angle/90));
                         rectMode(CENTER);
                         translate(0, -h/4);
-                        rect(0, 0, w, h/2, 12, 12, 0, 0); // Shape is the top half
-                        // Add text matching the top half
-                        rotateX(radians(this.angle)); // Negate rotation for text orientation
-                        // Fade text slightly as it folds
+                        rect(0, 0, w, h/2, 12, 12, 0, 0); 
+                        
+                        rotateX(radians(this.angle)); 
                         fill(255, lerp(255, 100, this.angle/90));
                         translate(0, h/4);
-                        text(this.currentVal, 0, 0);
+                        text(this.currentVal, 0, -h * 0.05);
                     } else {
-                        // Section 2: 90 to 180 degrees (Flipped panel settling on the bottom)
-                        rotateX(-radians(this.angle)); // Continue X rotation
-                        // Add light reflection shading as it settles
+                        rotateX(-radians(this.angle)); 
                         fill(lerpColor(color(15, 18, 24), color(30, 34, 45), (this.angle-90)/90));
                         rectMode(CENTER);
-                        translate(0, h/4); // Position center of the bottom half
-                        rect(0, 0, w, h/2, 0, 0, 12, 12); // Shape is the bottom half
-                        // Add text (which is now inverted and showing the NEW value)
-                        rotateX(radians(this.angle)); // Negate rotation for text
-                        // Restore full brightness to new text
+                        translate(0, h/4); 
+                        rect(0, 0, w, h/2, 0, 0, 12, 12); 
+                        
+                        rotateX(radians(this.angle)); 
                         fill(255, lerp(100, 255, (this.angle-90)/90));
-                        translate(0, -h/4); // Text should be at the center of the WHOLE card
-                        text(this.nextVal, 0, 0);
+                        translate(0, -h/4); 
+                        text(this.nextVal, 0, -h * 0.05);
                     }
                     pop();
                 }
 
-                // Dynamic Layer 4: Post-flip settling vibration (The subtle bounce)
+                // 레이어 4: 안착 진동 레이어 (Bounce 물리 궤적)
                 if (this.bounce !== 0 && !this.isFlipped) {
                     push();
-                    rotateX(radians(this.bounce)); // Subtle X-axis vibration
-                    fill(30, 34, 45); // Matching bottom panel color
+                    rotateX(radians(this.bounce)); 
+                    fill(30, 34, 45); 
                     rectMode(CENTER);
                     translate(0, h/4);
                     rect(0, 0, w, h/2, 0, 0, 12, 12);
                     fill(255);
                     translate(0, -h/4);
-                    text(this.currentVal, 0, 0);
+                    text(this.currentVal, 0, -h * 0.05);
                     pop();
                 }
 
-                // The classic flip clock details: central cut line and subtle edge shadows
+                // 아날로그 미드 컷 라인 디테일
                 push();
-                stroke(10, 12, 16, 200); // Dark cut line
+                stroke(10, 12, 16, 220); 
                 strokeWeight(2);
-                line(-w/2, 0, w/2, 0); // Central horizontal cut
+                line(-w/2, 0, w/2, 0); 
                 pop();
             }
         }

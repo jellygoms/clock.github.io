@@ -21,45 +21,52 @@
             background-color: #0c101b;
             color: #ffffff;
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            /* 화면 중앙 정렬을 위한 설정 */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            text-align: center;
         }
 
+        /* 시계와 PM을 감싸는 컨테이너 */
         .clock-container {
             position: relative;
             display: inline-block;
             font-size: 16vw; 
             font-weight: 200;
             letter-spacing: -2px;
+            margin-bottom: 2vh; /* 시계와 날짜 사이의 간격 */
         }
 
+        /* 오전/오후(PM) 스타일 */
         .ampm {
             position: absolute;
-            top: -0.2em;
-            right: 0;
+            top: -0.1em;
+            right: -1.1em; /* 시계 숫자 우측에 겹치지 않게 정렬 */
             font-size: 0.25em;
             font-weight: 300;
             letter-spacing: 0;
         }
 
+        /* 날짜 스타일 (폰트 크기 키움 및 중앙 정렬) */
         .date-container {
-            position: absolute;
-            bottom: 8%;
-            font-size: 2.5vw;
+            font-size: 4vw; /* 기존 2.5vw에서 4vw로 확대 */
             font-weight: 400;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9);
             letter-spacing: 1px;
+            margin-top: 10px;
+            width: 100%;
+            display: block;
         }
     </style>
 </head>
 <body>
 
     <div class="clock-container">
-        <span class="ampm" id="ampm">PM</span>
         <span id="time">0:00</span>
+        <span class="ampm" id="ampm">PM</span>
     </div>
 
     <div class="date-container" id="date">
@@ -68,12 +75,9 @@
 
     <script>
         function updateClock() {
-            // 현재 구형 기기의 기본 시간을 가져옵니다.
             var localNow = new Date();
             
-            // 구형 사파리의 타임존 버그를 우회하기 위해 
-            // 현재 표시되는 오차(8시간 느림)를 강제로 더해주는 보정치 적용
-            // 8시간 = 8 * 60 * 60 * 1000 밀리초
+            // 대한민국 시간 오차(8시간) 보정치
             var offset = 8 * 60 * 60 * 1000; 
             var now = new Date(localNow.getTime() + offset);
             
@@ -83,7 +87,7 @@
             var ampm = hours >= 12 ? 'PM' : 'AM';
             
             hours = hours % 12;
-            hours = hours ? hours : 12; // 0시는 12시로 변경
+            hours = hours ? hours : 12;
 
             if (minutes < 10) {
                 minutes = '0' + minutes;

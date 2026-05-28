@@ -21,7 +21,6 @@
             background-color: #0c101b;
             color: #ffffff;
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            /* 화면 중앙 정렬을 위한 설정 */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -30,29 +29,26 @@
             text-align: center;
         }
 
-        /* 시계와 PM을 감싸는 컨테이너 */
         .clock-container {
             position: relative;
             display: inline-block;
             font-size: 16vw; 
             font-weight: 200;
             letter-spacing: -2px;
-            margin-bottom: 2vh; /* 시계와 날짜 사이의 간격 */
+            margin-bottom: 2vh;
         }
 
-        /* 오전/오후(PM) 스타일 */
         .ampm {
             position: absolute;
             top: -0.1em;
-            right: -1.1em; /* 시계 숫자 우측에 겹치지 않게 정렬 */
+            right: -1.1em;
             font-size: 0.25em;
             font-weight: 300;
             letter-spacing: 0;
         }
 
-        /* 날짜 스타일 (폰트 크기 키움 및 중앙 정렬) */
         .date-container {
-            font-size: 4vw; /* 기존 2.5vw에서 4vw로 확대 */
+            font-size: 4vw;
             font-weight: 400;
             color: rgba(255, 255, 255, 0.9);
             letter-spacing: 1px;
@@ -75,11 +71,8 @@
 
     <script>
         function updateClock() {
-            var localNow = new Date();
-            
-            // 대한민국 시간 오차(8시간) 보정치
-            var offset = 8 * 60 * 60 * 1000; 
-            var now = new Date(localNow.getTime() + offset);
+            // 보정 없이 아이패드가 인식하는 현재 시간을 그대로 가져옵니다.
+            var now = new Date();
             
             // 1. 시간 계산
             var hours = now.getHours();
@@ -87,7 +80,7 @@
             var ampm = hours >= 12 ? 'PM' : 'AM';
             
             hours = hours % 12;
-            hours = hours ? hours : 12;
+            hours = hours ? hours : 12; // 0시는 12시로 변경
 
             if (minutes < 10) {
                 minutes = '0' + minutes;

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fixed Luxury 3D Flip Clock (p5.js)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0d0f14;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        // Global variables for the clock state
+        let cards = [];
+        let prevH = "", prevM = "";
+
+        // Standard p5.js setup function
+        function setup() {
+            let canvas = createCanvas(windowWidth, windowHeight, WEBGL);
+            canvas.parent('canvas-container');
+            
+            // Set up default text properties
+            textFont('Helvetica Neue, Helvetica, Arial, sans-serif');
+            textStyle(BOLD);
+            textAlign(CENTER, CENTER);
+
+            // Initialize 4 flip cards (HH:MM)
+            for (let i = 0; i < 4; i++) {
+                cards.push(new FlipCard());
+            }
+            
+            // Set initial time immediately
+            updateTime(true);
+        }
+
+        // Standard p5.js draw function
+        function draw() {
+            background(13, 15, 20); // Deep, dark background
+            
+            // Lighting for subtle 3D depth and volume
+            ambientLight(100);
+            directionalLight(200, 200, 200, 0, 0, -1);
+
+            // Check for time update
+            updateTime(false);
+
+            // Determine dynamic card scaling based on screen size
+            let cardW = min(width * 0.16, 150); // Set a base card width
+            let cardH = cardW * 1.4; // Flip cards are usually tall
+            let gap = cardW * 0.15; // Gap between digits
+            let totalW = (cardW * 4) + (gap * 3) + (cardW * 0.5); // Total clock width including separator gap
+
+            // Push transformation to draw from the center
+            push();
+            translate(-totalW / 2 + cardW / 2, 0);
+
+            // 1. Hours area (Card 1, Card 2)
+            cards[0].display(cardW, cardH);
+            translate(cardW + gap, 0);
+            cards[1].display(cardW, cardH);
+            
+            // 2. Center separator (:) 
+            translate(cardW/2 + gap, -cardH * 0.05); // Adjust Y to align dots better
+            drawSeparator(cardW * 0.15); // Separator size relative to card
+            
+            // 3. Minutes area (Card 3, Card 4)
+            translate(cardW/2 + gap, cardH * 0.05); // Restore Y position
+            cards[2].display(cardW, cardH);
+            translate(cardW + gap, 0);
+            cards[3].display(cardW, cardH);
+
+            pop();
+        }
+
+        // Functions to manage time
+        function updateTime(isFirst) {
+            let h = nf(hour(), 2);
+            let m = nf(minute(), 2);
+
+            // Set initial state without animation
+            if (isFirst) {
+                prevH = h; prevM = m;
+                cards[0].init(h[0]); cards[1].init(h[1]);
+                cards[2].init(m[0]); cards[3].init(m[1]);
+                return;
+            }
+
+            // Check and update hours
+            if (h !== prevH) {
+                if (h[0] !== prevH[0]) cards[0].flipTo(h[0]);
+                if (h[1] !== prevH[1]) cards[1].flipTo(h[1]);
+                prevH = h;
+            }
+            // Check and update minutes
+            if (m !== prevM) {
+                if (m[0] !== prevM[0]) cards[2].flipTo(m[0]);
+                if (m[1] !== prevM[1]) cards[3].flipTo(m[1]);
+                prevM = m;
+            }
+        }
+
+        // Draw the static colon separator (:)
+        function drawSeparator(size) {
+            push();
+            noStroke();
+            fill(224, 230, 237, 180); // Subtle, slightly transparent dots
+            ellipse(0, -size * 1.5, size, size); // Top dot
+            ellipse(0, size * 1.5, size, size); // Bottom dot
+            pop();
+        }
+
+        // Re-calculate layout and resize canvas on window resize
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        // Object-Oriented Class for individual flip cards
+        class FlipCard {
+            constructor() {
+                this.currentVal = "0";
+                this.nextVal = "0";
+                this.isFlipped = false;
+                this.angle = 0; // Flip animation angle
+                this.bounce = 0; // Analogue settling animation physics variable
+            }
+
+            // Initialize card without animation
+            init(val) {
+                this.currentVal = val;
+                this.nextVal = val;
+            }
+
+            // Trigger a flip animation to a new value
+            flipTo(newVal) {
+                if (this.currentVal === newVal) return; // Prevent double-triggering
+                this.nextVal = newVal;
+                this.isFlipped = true;
+                this.angle = 0;
+                this.bounce = 0;
+            }
+
+            // Draw the card
+            display(w, h) {
+                // Update flip animation angle
+                if (this.isFlipped) {
+                    this.angle += 5.5; // Controls the initial falling speed
+                    if (this.angle >= 180) {
+                        // Flip is complete
+                        this.currentVal = this.nextVal;
+                        this.isFlipped = false;
+                        this.angle = 0;
+                        this.bounce = 15; // Initiate settling bounce amplitude
+                    }
+                }
+
+                // Update settling bounce physics
+                if (this.bounce > 0) {
+                    this.bounce *= -0.8; // Set reflection coefficient (negative to alternate side)
+                    if (abs(this.bounce) < 0.5) this.bounce = 0; // Damping complete
+                }
+
+                // طلب 황금 비율 (Golden Ratio) 반영: 글자 크기를 더 여유 있게 조정
+                // This ensures a pleasing amount of padding around the digit.
+                let fontSize = w * 0.8; 
+                textSize(fontSize);
+
+                noStroke();
+
+                // Static Layer 1: Bottom static panel background (showing the NEXT digit waiting)
+                push();
+                fill(30, 34, 45); // Dark panel color
+                rectMode(CENTER);
+                translate(0, h/4); // Position center of the bottom half
+                rect(0, 0, w, h/2, 0, 0, 12, 12); // Rounded corners at bottom
+                // Align text correctly within the bottom half
+                fill(255);
+                translate(0, -h/4); // Text should be at the center of the WHOLE card
+                text(this.nextVal, 0, 0);
+                pop();
+
+                // Static Layer 2: Top static panel background (showing CURRENT digit)
+                push();
+                fill(36, 41, 54); // Slightly lighter panel color for top
+                rectMode(CENTER);
+                translate(0, -h/4); // Position center of the top half
+                rect(0, 0, w, h/2, 12, 12, 0, 0); // Rounded corners at top
+                // Align text correctly within the top half
+                fill(255);
+                translate(0, h/4); // Text should be at the center of the WHOLE card
+                text(this.currentVal, 0, 0);
+                pop();
+
+                // Dynamic Layer 3: The actual flipping panel
+                if (this.isFlipped) {
+                    push();
+                    if (this.angle < 90) {
+                        // Section 1: 0 to 90 degrees (Top half folding down forward)
+                        rotateX(-radians(this.angle)); // Rotate around the X-axis (forward)
+                        // Use lerpColor to add shading as it folds
+                        fill(lerpColor(color(36, 41, 54), color(15, 18, 24), this.angle/90));
+                        rectMode(CENTER);
+                        translate(0, -h/4);
+                        rect(0, 0, w, h/2, 12, 12, 0, 0); // Shape is the top half
+                        // Add text matching the top half
+                        rotateX(radians(this.angle)); // Negate rotation for text orientation
+                        // Fade text slightly as it folds
+                        fill(255, lerp(255, 100, this.angle/90));
+                        translate(0, h/4);
+                        text(this.currentVal, 0, 0);
+                    } else {
+                        // Section 2: 90 to 180 degrees (Flipped panel settling on the bottom)
+                        rotateX(-radians(this.angle)); // Continue X rotation
+                        // Add light reflection shading as it settles
+                        fill(lerpColor(color(15, 18, 24), color(30, 34, 45), (this.angle-90)/90));
+                        rectMode(CENTER);
+                        translate(0, h/4); // Position center of the bottom half
+                        rect(0, 0, w, h/2, 0, 0, 12, 12); // Shape is the bottom half
+                        // Add text (which is now inverted and showing the NEW value)
+                        rotateX(radians(this.angle)); // Negate rotation for text
+                        // Restore full brightness to new text
+                        fill(255, lerp(100, 255, (this.angle-90)/90));
+                        translate(0, -h/4); // Text should be at the center of the WHOLE card
+                        text(this.nextVal, 0, 0);
+                    }
+                    pop();
+                }
+
+                // Dynamic Layer 4: Post-flip settling vibration (The subtle bounce)
+                if (this.bounce !== 0 && !this.isFlipped) {
+                    push();
+                    rotateX(radians(this.bounce)); // Subtle X-axis vibration
+                    fill(30, 34, 45); // Matching bottom panel color
+                    rectMode(CENTER);
+                    translate(0, h/4);
+                    rect(0, 0, w, h/2, 0, 0, 12, 12);
+                    fill(255);
+                    translate(0, -h/4);
+                    text(this.currentVal, 0, 0);
+                    pop();
+                }
+
+                // The classic flip clock details: central cut line and subtle edge shadows
+                push();
+                stroke(10, 12, 16, 200); // Dark cut line
+                strokeWeight(2);
+                line(-w/2, 0, w/2, 0); // Central horizontal cut
+                pop();
+            }
+        }
+    </script>
+</body>
+</html>

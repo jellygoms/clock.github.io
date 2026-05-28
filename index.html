@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minimal Clock</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0c101b; /* 이미지의 딥블루/네이비 톤 반영 */
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* 시계와 PM을 감싸는 컨테이너 */
+        .clock-container {
+            position: relative;
+            display: inline-block;
+            /* iPad 2 해상도에 맞춘 기본 폰트 크기 조정 */
+            font-size: 16vw; 
+            font-weight: 200; /* 얇은 서체 스타일 */
+            letter-spacing: -2px;
+        }
+
+        /* 오전/오후(PM) 스타일 */
+        .ampm {
+            position: absolute;
+            top: -0.2em;
+            right: 0;
+            font-size: 0.25em;
+            font-weight: 300;
+            letter-spacing: 0;
+        }
+
+        /* 날짜 스타일 (하단 배치) */
+        .date-container {
+            position: absolute;
+            bottom: 8%;
+            font-size: 2.5vw;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="clock-container">
+        <span class="ampm" id="ampm">PM</span>
+        <span id="time">0:00</span>
+    </div>
+
+    <div class="date-container" id="date">
+        0월 0일 요일
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            
+            // 시간 계산 (12시간제 적용)
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // 0시는 12시로 표시
+
+            // 시간 업데이트
+            document.getElementById('time').textContent = `${hours}:${minutes}`;
+            document.getElementById('ampm').textContent = ampm;
+
+            // 날짜 및 요일 계산
+            const months = now.getMonth() + 1;
+            const date = now.getDate();
+            const weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+            const dayOfWeek = weekDays[now.getDay()];
+
+            // 날짜 업데이트 (예: 9월 5일 목요일)
+            document.getElementById('date').textContent = `${months}월 ${date}일 ${dayOfWeek}`;
+        }
+
+        // 1초마다 시계 갱신
+        setInterval(updateClock, 1000);
+        // 실행 즉시 시계 표시
+        updateClock();
+
+        // 구형 기기에서 화면을 탭했을 때 스크롤 튕김 방지
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>

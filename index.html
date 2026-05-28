@@ -68,9 +68,16 @@
 
     <script>
         function updateClock() {
-            var now = new Date();
+            // 현재 구형 기기의 기본 시간을 가져옵니다.
+            var localNow = new Date();
             
-            // 1. 시간 계산 (구형 자바스크립트 호환 방식)
+            // 구형 사파리의 타임존 버그를 우회하기 위해 
+            // 현재 표시되는 오차(8시간 느림)를 강제로 더해주는 보정치 적용
+            // 8시간 = 8 * 60 * 60 * 1000 밀리초
+            var offset = 8 * 60 * 60 * 1000; 
+            var now = new Date(localNow.getTime() + offset);
+            
+            // 1. 시간 계산
             var hours = now.getHours();
             var minutes = now.getMinutes();
             var ampm = hours >= 12 ? 'PM' : 'AM';
@@ -78,12 +85,10 @@
             hours = hours % 12;
             hours = hours ? hours : 12; // 0시는 12시로 변경
 
-            // 분이 10 미만일 때 앞에 0 붙이기 (구형 방식)
             if (minutes < 10) {
                 minutes = '0' + minutes;
             }
 
-            // 텍스트 결합 구형 방식으로 수정 (백틱 `` 사용 안함)
             document.getElementById('time').innerHTML = hours + ':' + minutes;
             document.getElementById('ampm').innerHTML = ampm;
 
@@ -93,16 +98,12 @@
             var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
             var dayOfWeek = weekDays[now.getDay()];
 
-            // 날짜 업데이트
             document.getElementById('date').innerHTML = months + '월 ' + date + '일 ' + dayOfWeek;
         }
 
-        // 1초마다 시계 갱신
         setInterval(updateClock, 1000);
-        // 실행 즉시 시계 표시
         updateClock();
 
-        // 터치 스크롤 방지
         document.addEventListener('touchmove', function(e) {
             e.preventDefault();
         }, false);

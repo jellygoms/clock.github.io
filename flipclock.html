@@ -18,7 +18,7 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            background-color: #0b0d13; /* 어두운 배경 */
+            background-color: #0b0d13;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -26,66 +26,85 @@
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         }
 
-        /* 시계 전체 컨테이너 (정중앙 배치) */
+        /* 시계 전체 컨테이너: 화면 비율에 맞춰 전체 크기를 유연하게 조절 */
         .flip-clock {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 2vw; /* 시, 분, 초 사이의 간격 */
+            /* 최대 가로 폭을 화면의 95%로 제한하여 절대 잘리지 않게 방지 */
+            width: 95vw;
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
-        /* 구분점 (:) 스타일 */
-        .separator {
-            font-size: 12vw;
-            color: #ffffff;
-            font-weight: 300;
-            opacity: 0.8;
-            padding-bottom: 2vw;
-        }
-
-        /* 플립 카드 한 칸의 스타일 */
+        /* 플립 카드 한 칸의 스타일: 비율(Aspect Ratio) 방식으로 고정 */
         .flip-card {
             position: relative;
-            width: 16vw;
-            height: 22vw;
-            font-size: 16vw;
+            flex: 1; /* 카드들이 화면 너비에 맞춰 균등하게 크기 조절됨 */
+            max-width: 12vw; /* 각 카드의 최대 크기 제한 */
+            height: 16vw;    /* 3:4 비율에 가깝게 높이 설정 */
+            max-height: 22vh; /* 세로 화면에서도 잘리지 않도록 제한 */
+            font-size: 11vw;  /* 카드 크기에 맞춘 폰트 사이즈 */
             font-weight: 700;
-            line-height: 22vw;
             color: #ffffff;
             text-align: center;
-            border-radius: 1.5vw;
-            /* 구형 기기 가속을 위한 설정 */
+            border-radius: 1vw;
+            background: #1e222d;
+            margin: 0 0.4vw; /* 카드 간 세밀한 간격 */
+            
             -webkit-transform: translate3d(0,0,0);
             transform: translate3d(0,0,0);
         }
 
-        /* 카드의 상단/하단 절반 공통 스타일 */
+        /* 카드 높이에 맞춰 글자 수직 정렬을 동적으로 잡기 위한 믹스인 효과 */
         .card-half {
             position: absolute;
             left: 0;
             width: 100%;
             height: 50%;
             overflow: hidden;
-            background: #1e222d; /* 카드 배경색 */
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
         }
 
         .card-top {
             top: 0;
-            border-top-left-radius: 1.5vw;
-            border-top-right-radius: 1.5vw;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.4); /* 중간 절취선 */
+            border-top-left-radius: 1vw;
+            border-top-right-radius: 1vw;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+            align-items: flex-start;
+        }
+        /* 상단 숫자가 반 잘려 보이지 않게 정렬 유지 */
+        .card-top span {
+            transform: translateY(12%);
+            -webkit-transform: translateY(12%);
         }
 
         .card-bottom {
             bottom: 0;
-            border-bottom-left-radius: 1.5vw;
-            border-bottom-right-radius: 1.5vw;
-            line-height: 0; /* 하단 숫자는 위로 붙도록 설정 */
+            border-bottom-left-radius: 1vw;
+            border-bottom-right-radius: 1vw;
+            align-items: flex-end;
+        }
+        /* 하단 숫자가 반 잘려 보이지 않게 정렬 유지 */
+        .card-bottom span {
+            transform: translateY(-38%);
+            -webkit-transform: translateY(-38%);
         }
 
-        /* 구형 기기에서도 부드럽게 작동하는 플립 셔터 애니메이션 효과 */
+        /* 구분점 (:) 스타일 */
+        .separator {
+            font-size: 8vw;
+            color: #ffffff;
+            font-weight: 300;
+            opacity: 0.6;
+            margin: 0 1vw;
+            padding-bottom: 1vw;
+        }
+
+        /* 애니메이션 효과 */
         @keyframes flipTop {
             0% { transform: scaleY(1); background: #1e222d; }
             50% { transform: scaleY(0); background: #11141a; }
@@ -97,7 +116,6 @@
             100% { -webkit-transform: scaleY(0); }
         }
 
-        /* 애니메이션 실행 클래스 */
         .animate .card-top {
             animation: flipTop 0.3s ease-in-out;
             -webkit-animation: flipTop 0.3s ease-in-out;
@@ -107,46 +125,38 @@
 <body>
 
     <div class="flip-clock">
-        <div class="flip-card" id="h1"><div class="card-half card-top">0</div><div class="card-half card-bottom">0</div></div>
-        <div class="flip-card" id="h2"><div class="card-half card-top">0</div><div class="card-half card-bottom">0</div></div>
+        <div class="flip-card" id="h1"><div class="card-half card-top"><span>0</span></div><div class="card-half card-bottom"><span>0</span></div></div>
+        <div class="flip-card" id="h2"><div class="card-half card-top"><span>0</span></div><div class="card-half card-bottom"><span>0</span></div></div>
         
         <div class="separator">:</div>
         
-        <div class="flip-card" id="m1"><div class="card-half card-top">0</div><div class="card-half card-bottom">0</div></div>
-        <div class="flip-card" id="m2"><div class="card-half card-top">0</div><div class="card-half card-bottom">0</div></div>
+        <div class="flip-card" id="m1"><div class="card-half card-top"><span>0</span></div><div class="card-half card-bottom"><span>0</span></div></div>
+        <div class="flip-card" id="m2"><div class="card-half card-top"><span>0</span></div><div class="card-half card-bottom"><span>0</span></div></div>
         
         <div class="separator">:</div>
         
-        <div class="flip-card" id="s1"><div class="card-half card-top">0</div><div class="card-half card-bottom">0</div></div>
-        <div class="flip-card" id="s2"><div class="card-half card-top">0</div><div class="card-half card-bottom">0</div></div>
+        <div class="flip-card" id="s1"><div class="card-half card-top"><span>0</span></div><div class="card-half card-bottom"><span>0</span></div></div>
+        <div class="flip-card" id="s2"><div class="card-half card-top"><span>0</span></div><div class="card-half card-bottom"><span>0</span></div></div>
     </div>
 
     <script>
-        // 개별 카드의 숫자를 바꾸고 애니메이션을 적용하는 함수 (구형 자바스크립트 호환)
         function setCardValue(cardId, newValue) {
             var card = document.getElementById(cardId);
-            var topHalf = card.querySelector('.card-top');
-            var bottomHalf = card.querySelector('.card-bottom');
+            var topSpan = card.querySelector('.card-top span');
+            var bottomSpan = card.querySelector('.card-bottom span');
             
-            // 현재 표시된 값과 바뀔 값이 다를 때만 애니메이션 실행
-            if (topHalf.innerHTML !== newValue) {
-                // 1. 기존 애니메이션 클래스 제거
+            if (topSpan.innerHTML !== newValue) {
                 card.classList.remove('animate');
-                
-                // 구형 브라우저에서 애니메이션 리셋을 인식시키기 위한 꼼수(Reflow)
                 var reflow = card.offsetWidth; 
                 
-                // 2. 값 교체 및 애니메이션 클래스 추가
-                topHalf.innerHTML = newValue;
-                bottomHalf.innerHTML = newValue;
+                topSpan.innerHTML = newValue;
+                bottomSpan.innerHTML = newValue;
                 card.classList.add('animate');
             }
         }
 
         function updateClock() {
             var now = new Date();
-            
-            // 시, 분, 초를 각각 두 자리 문자열로 분리 (구형 방식 호환)
             var hours = now.getHours();
             var minutes = now.getMinutes();
             var seconds = now.getSeconds();
@@ -155,7 +165,6 @@
             var mStr = (minutes < 10 ? '0' : '') + minutes;
             var sStr = (seconds < 10 ? '0' : '') + seconds;
 
-            // 각 자릿수 카드로 숫자 전달
             setCardValue('h1', hStr.charAt(0));
             setCardValue('h2', hStr.charAt(1));
             setCardValue('m1', mStr.charAt(0));
@@ -164,11 +173,9 @@
             setCardValue('s2', sStr.charAt(1));
         }
 
-        // 1초보다 빠르게 반응하도록 0.5초마다 체크
         setInterval(updateClock, 500);
         updateClock();
 
-        // 터치 스크롤 방지
         document.addEventListener('touchmove', function(e) {
             e.preventDefault();
         }, false);

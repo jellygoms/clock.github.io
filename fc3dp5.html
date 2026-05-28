@@ -5,7 +5,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Premium 3D Flip Clock (p5.js Font-Fixed)</title>
+    <title>Ultimate 3D Flip Clock (p5.js Zero-Dependency)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -37,21 +37,14 @@
     <script>
         let cards = [];
         let prevH = "", prevM = "";
-        let customFont;
-
-        // 폰트 증발 현상을 막기 위해 캔버스가 켜지기 전 폰트 파일을 서버에서 선제 다운로드
-        function preload() {
-            // WEBGL 3D 렌더링 엔진과 호환성이 가장 좋은 구글 폰트(Roboto-Bold) 배치
-            customFont = loadFont('https://themes.googleusercontent.com/static/fonts/roboto/v10/Bd7va8V_9fA6m8unbJeguA.ttf');
-        }
+        let fontPoints = {}; // 0~9 숫자의 뼈대 좌표를 담을 벡터 맵
 
         function setup() {
             let canvas = createCanvas(windowWidth, windowHeight, WEBGL);
             canvas.parent('canvas-container');
             
-            // 외부 로드 폰트 세팅 지정
-            textFont(customFont);
-            textAlign(CENTER, CENTER);
+            // 폰트 파일 오류를 우회하기 위해, 숫자를 그릴 3D 수학적 기하 좌표 벡터 정의
+            initFontPoints();
 
             for (let i = 0; i < 4; i++) {
                 cards.push(new FlipCard());
@@ -62,12 +55,13 @@
         function draw() {
             background(13, 15, 20);
             
-            // 3D 입체 라이팅 최적화
-            ambientLight(110);
-            directionalLight(220, 220, 220, 0, 0, -1);
+            // 시각적 입체감을 극대화하는 조명 세팅
+            ambientLight(140);
+            directionalLight(255, 255, 255, 0.3, 0.3, -1);
 
             updateTime(false);
 
+            // 화면 크기 반응형 비율 스케일 연산
             let cardW = min(width * 0.16, 150); 
             let cardH = cardW * 1.4; 
             let gap = cardW * 0.15; 
@@ -76,17 +70,17 @@
             push();
             translate(-totalW / 2 + cardW / 2, 0);
 
-            // 1. 시 (Card 1, Card 2)
+            // 1. 시 영역 (카드 1, 카드 2)
             cards[0].display(cardW, cardH);
             translate(cardW + gap, 0);
             cards[1].display(cardW, cardH);
             
             // 2. 구분 기호 (:)
-            translate(cardW/2 + gap, -cardH * 0.03); 
-            drawSeparator(cardW * 0.15); 
+            translate(cardW/2 + gap, 0); 
+            drawSeparator(cardW * 0.12); 
             
-            // 3. 분 (Card 3, Card 4)
-            translate(cardW/2 + gap, cardH * 0.03); 
+            // 3. 분 영역 (카드 3, 카드 4)
+            translate(cardW/2 + gap, 0); 
             cards[2].display(cardW, cardH);
             translate(cardW + gap, 0);
             cards[3].display(cardW, cardH);
@@ -120,14 +114,58 @@
         function drawSeparator(size) {
             push();
             noStroke();
-            fill(224, 230, 237, 180);
-            ellipse(0, -size * 1.5, size, size); 
-            ellipse(0, size * 1.5, size, size); 
+            fill(224, 230, 237, 200);
+            translate(0, -size * 1.5, 1);
+            sphere(size * 0.4); // 더욱 입체적인 구체 분리점 연출
+            translate(0, size * 3, 0);
+            sphere(size * 0.4);
             pop();
         }
 
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
+        }
+
+        // 외부 폰트 파일 없이 화면에 완벽하고 깔끔한 숫자를 선으로 드로잉하기 위한 7세그먼트 스타일 기하 알고리즘
+        function initFontPoints() {
+            // 디지털 숫자를 표현하는 세그먼트 좌표들 정의
+            fontPoints['0'] = [1,2,3,4,5,6];
+            fontPoints['1'] = [2,3];
+            fontPoints['2'] = [1,2,7,5,4];
+            fontPoints['3'] = [1,2,7,3,4];
+            fontPoints['4'] = [6,7,2,3];
+            fontPoints['5'] = [1,6,7,3,4];
+            fontPoints['6'] = [1,6,5,4,3,7];
+            fontPoints['7'] = [1,2,3];
+            fontPoints['8'] = [1,2,3,4,5,6,7];
+            fontPoints['9'] = [1,2,3,4,6,7];
+        }
+
+        // 3D 공간 상에 황금비 마진을 가진 숫자를 벡터 그래픽으로 렌더링하는 핵심 함수
+        function drawVectorNumber(numStr, w, h) {
+            let segs = fontPoints[numStr] || [];
+            let sw = w * 0.45; // 숫자의 가로폭 비율 고정
+            let sh = h * 0.65; // 숫자의 세로폭 비율 고정 (황금 여백 확보)
+            
+            stroke(255);
+            strokeWeight(w * 0.08); // 고급스럽고 도톰한 서체 두께 연출
+            strokeCap(ROUND);
+            strokeJoin(ROUND);
+            noFill();
+
+            push();
+            translate(0, 0, 2); // 패널 위로 밀착 출력
+
+            // 각 세그먼트 위치 그리기
+            if (segs.includes(1)) line(-sw/2, -sh/2, sw/2, -sh/2);     // 상
+            if (segs.includes(2)) line(sw/2, -sh/2, sw/2, 0);          // 우상
+            if (segs.includes(3)) line(sw/2, 0, sw/2, sh/2);           // 우하
+            if (segs.includes(4)) line(-sw/2, sh/2, sw/2, sh/2);       // 하
+            if (segs.includes(5)) line(-sw/2, 0, -sw/2, sh/2);         // 좌하
+            if (segs.includes(6)) line(-sw/2, -sh/2, -sw/2, 0);        // 좌상
+            if (segs.includes(7)) line(-sw/2, 0, sw/2, 0);             // 중
+
+            pop();
         }
 
         class FlipCard {
@@ -154,96 +192,92 @@
 
             display(w, h) {
                 if (this.isFlipped) {
-                    this.angle += 5.5; 
+                    this.angle += 4.5; // 우아하고 묵직한 속도 밸런스
                     if (this.angle >= 180) {
                         this.currentVal = this.nextVal;
                         this.isFlipped = false;
                         this.angle = 0;
-                        this.bounce = 15; 
+                        this.bounce = 14; // 매력적인 튕김 수치
                     }
                 }
 
                 if (this.bounce > 0) {
-                    this.bounce *= -0.8; 
-                    if (abs(this.bounce) < 0.5) this.bounce = 0; 
+                    this.bounce *= -0.75; 
+                    if (abs(this.bounce) < 0.4) this.bounce = 0; 
                 }
 
-                // 폰트 여백 조건 반영 (카드의 78% 비율 크기 고정)
-                let fontSize = w * 0.78; 
-                textSize(fontSize);
                 noStroke();
 
-                // 레이어 1: 하단 배경 (미래의 숫자)
+                // 1. 하단 배경 고정 패널
                 push();
                 fill(30, 34, 45); 
                 rectMode(CENTER);
-                translate(0, h/4); 
-                rect(0, 0, w, h/2, 0, 0, 12, 12); 
-                fill(255);
-                translate(0, -h/4); 
-                // WEBGL 텍스트 높낮이 미세 튜닝 보정 수치 설정
-                text(this.nextVal, 0, -h * 0.05);
+                translate(0, h/4, 0); 
+                // 위아래 완벽한 하프 컷 적용을 위해 마스킹 렌더링
+                drawingContext.disable(drawingContext.DEPTH_TEST);
+                rect(0, 0, w, h/2, 0, 0, 14, 14); 
+                drawingContext.enable(drawingContext.DEPTH_TEST);
+                translate(0, -h/4, 0);
+                drawVectorNumber(this.nextVal, w, h);
                 pop();
 
-                // 레이어 2: 상단 배경 (현재 숫자)
+                // 2. 상단 배경 고정 패널
                 push();
                 fill(36, 41, 54); 
                 rectMode(CENTER);
-                translate(0, -h/4); 
-                rect(0, 0, w, h/2, 12, 12, 0, 0); 
-                fill(255);
-                translate(0, h/4); 
-                text(this.currentVal, 0, -h * 0.05);
+                translate(0, -h/4, 0); 
+                drawingContext.disable(drawingContext.DEPTH_TEST);
+                rect(0, 0, w, h/2, 14, 14, 0, 0); 
+                drawingContext.enable(drawingContext.DEPTH_TEST);
+                translate(0, h/4, 0); 
+                drawVectorNumber(this.currentVal, w, h);
                 pop();
 
-                // 레이어 3: 회전하는 3D 플립 플레이트
+                // 3. 3D 리얼 무빙 회전 패널
                 if (this.isFlipped) {
                     push();
                     if (this.angle < 90) {
                         rotateX(-radians(this.angle)); 
-                        fill(lerpColor(color(36, 41, 54), color(15, 18, 24), this.angle/90));
+                        fill(lerpColor(color(36, 41, 54), color(14, 16, 22), this.angle/90));
                         rectMode(CENTER);
-                        translate(0, -h/4);
-                        rect(0, 0, w, h/2, 12, 12, 0, 0); 
+                        translate(0, -h/4, 0);
+                        rect(0, 0, w, h/2, 14, 14, 0, 0); 
                         
                         rotateX(radians(this.angle)); 
-                        fill(255, lerp(255, 100, this.angle/90));
-                        translate(0, h/4);
-                        text(this.currentVal, 0, -h * 0.05);
+                        translate(0, h/4, 0);
+                        drawVectorNumber(this.currentVal, w, h);
                     } else {
                         rotateX(-radians(this.angle)); 
-                        fill(lerpColor(color(15, 18, 24), color(30, 34, 45), (this.angle-90)/90));
+                        fill(lerpColor(color(14, 16, 22), color(30, 34, 45), (this.angle-90)/90));
                         rectMode(CENTER);
-                        translate(0, h/4); 
-                        rect(0, 0, w, h/2, 0, 0, 12, 12); 
+                        translate(0, h/4, 0); 
+                        rect(0, 0, w, h/2, 0, 0, 14, 14); 
                         
                         rotateX(radians(this.angle)); 
-                        fill(255, lerp(100, 255, (this.angle-90)/90));
-                        translate(0, -h/4); 
-                        text(this.nextVal, 0, -h * 0.05);
+                        translate(0, -h/4, 0); 
+                        drawVectorNumber(this.nextVal, w, h);
                     }
                     pop();
                 }
 
-                // 레이어 4: 안착 진동 레이어 (Bounce 물리 궤적)
+                // 4. 안착 시 잔진동(Bounce) 감쇠 물리 패널
                 if (this.bounce !== 0 && !this.isFlipped) {
                     push();
                     rotateX(radians(this.bounce)); 
                     fill(30, 34, 45); 
                     rectMode(CENTER);
-                    translate(0, h/4);
-                    rect(0, 0, w, h/2, 0, 0, 12, 12);
-                    fill(255);
-                    translate(0, -h/4);
-                    text(this.currentVal, 0, -h * 0.05);
+                    translate(0, h/4, 0);
+                    rect(0, 0, w, h/2, 0, 0, 14, 14); 
+                    translate(0, -h/4, 0);
+                    drawVectorNumber(this.currentVal, w, h);
                     pop();
                 }
 
-                // 아날로그 미드 컷 라인 디테일
+                // 클래식 수평 분할 라인
                 push();
-                stroke(10, 12, 16, 220); 
-                strokeWeight(2);
-                line(-w/2, 0, w/2, 0); 
+                stroke(10, 11, 15, 240); 
+                strokeWeight(2.5);
+                line(-w/2, 0, 1, w/2, 0, 1); 
                 pop();
             }
         }
